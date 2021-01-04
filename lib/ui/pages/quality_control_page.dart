@@ -172,6 +172,38 @@ class _QualityControlPageState extends State<QualityControlPage> {
                           _project = selectedProject.text;
                           _idSchedule = selectedProject.id.toString();
 
+                          setState(() {
+                            isLoading = true;
+                          });
+                          await ProjectService.getProjectsById(
+                                  id: _idSchedule,
+                                  role: (widget.role == null)
+                                      ? widget.link
+                                      : widget.role)
+                              .then((value) {
+                            schedules = value;
+                            setState(() {});
+                            schedules.forEach((element) {
+                              if (element.data != null &&
+                                  element.data.imageAfters != null)
+                                element.data.imageAfters.forEach((e) async {
+                                  e.base64 = await networkImageToBase64(e.src);
+                                });
+                              if (element.data != null &&
+                                  element.data.imageBefores != null)
+                                element.data.imageBefores.forEach((e) async {
+                                  e.base64 = await networkImageToBase64(e.src);
+                                  // print(e.src);
+                                  // print(e.path);
+                                  // print(e.base64);
+                                });
+                              setState(() {});
+                            });
+                          });
+                          setState(() {
+                            isLoading = false;
+                          });
+
                           setState(() {});
                         }
                       },
