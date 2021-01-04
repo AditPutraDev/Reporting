@@ -15,71 +15,8 @@ class _QualityControlPageState extends State<QualityControlPage> {
   int projectIndex = 0;
   int scheduleIndex = 0;
 
-  bool more = true;
-  List<ProjectModel> dataProject = List();
   List<dynamic> data = List();
-  List<dynamic> projectList = List();
   List<dynamic> reportData = List();
-  ScrollController _scrollController = ScrollController();
-
-  _loadMore() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final data = await ProjectService.getProjectsData(
-        role: (widget.role == null) ? widget.link : widget.role);
-
-    if (data.projects != null && data.projects.isNotEmpty) {
-      setState(() {
-        isLoading = false;
-        dataProject.addAll(data.projects);
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-        more = false;
-      });
-    }
-  }
-
-  _loadData() async {
-    setState(() {
-      isLoading = true;
-    });
-    final data = await ProjectService.getProjectsData(
-        role: (widget.role == null) ? widget.link : widget.role);
-
-    if (data.projects != null && data.projects.isNotEmpty) {
-      setState(() {
-        dataProject.addAll(data.projects);
-        isLoading = false;
-      });
-      return;
-    }
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    this._loadData();
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
-        if (more) _loadMore();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    projectList.length;
-    super.dispose();
-  }
 
   String _project = "";
   String _idSchedule = "";
@@ -210,72 +147,94 @@ class _QualityControlPageState extends State<QualityControlPage> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold),
               ),
-              (dataProject.isEmpty && isLoading)
+              (isLoading)
                   ? Center(
                       child: SpinKitCircle(
                         size: 50,
                         color: Colors.red[900],
                       ),
                     )
-                  : DropdownButton<ProjectModel>(
-                      isExpanded: true,
-                      hint: Text("Pilih subjek jadwal"),
-                      value: _project != "" ? dataProject[projectIndex] : null,
-                      items: dataProject.map((value) {
-                        return DropdownMenuItem(
-                          child: SingleChildScrollView(
-                            reverse: true,
-                            physics: BouncingScrollPhysics(),
-                            controller: _scrollController,
-                            child: Text(value.text),
-                          ),
-                          value: value,
-                          onTap: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-                            await ProjectService.getProjectsById(
-                                    id: value.id.toString(),
-                                    role: (widget.role == null)
-                                        ? widget.link
-                                        : widget.role)
-                                .then((value) {
-                              schedules = value;
-                              setState(() {});
-                              schedules.forEach((element) {
-                                if (element.data != null &&
-                                    element.data.imageAfters != null)
-                                  element.data.imageAfters.forEach((e) async {
-                                    e.base64 =
-                                        await networkImageToBase64(e.src);
-                                  });
-                                if (element.data != null &&
-                                    element.data.imageBefores != null)
-                                  element.data.imageBefores.forEach((e) async {
-                                    e.base64 =
-                                        await networkImageToBase64(e.src);
-                                    // print(e.src);
-                                    // print(e.path);
-                                    // print(e.base64);
-                                  });
-                                setState(() {});
-                              });
-                            });
-                            setState(() {
-                              isLoading = false;
-                            });
+                  : ListTile(
+                      title: Text(
+                          _project.isEmpty ? 'Pilih Subjek Jadwal' : _project),
+                      onTap: () async {
+                        ProjectModel selectedProject =
+                            await showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return _SubjekJadwalSelection(
+                              widget: widget,
+                            );
                           },
                         );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _project = value.text;
-                          _idSchedule = value.id.toString();
-                          projectIndex = dataProject
-                              .indexWhere((e) => e.text == value.text);
-                        });
+
+                        if (selectedProject != null) {
+                          _project = selectedProject.text;
+                          _idSchedule = selectedProject.id.toString();
+
+                          setState(() {});
+                        }
                       },
                     ),
+              // : DropdownButton<ProjectModel>(
+              //     isExpanded: true,
+              //     hint: Text("Pilih subjek jadwal"),
+              //     value: _project != "" ? dataProject[projectIndex] : null,
+              //     items: dataProject.map((value) {
+              //       return DropdownMenuItem(
+              //         child: SingleChildScrollView(
+              //           reverse: true,
+              //           physics: BouncingScrollPhysics(),
+              //           controller: _scrollController,
+              //           child: Text(value.text),
+              //         ),
+              //         value: value,
+              //         onTap: () async {
+              //           setState(() {
+              //             isLoading = true;
+              //           });
+              //           await ProjectService.getProjectsById(
+              //                   id: value.id.toString(),
+              //                   role: (widget.role == null)
+              //                       ? widget.link
+              //                       : widget.role)
+              //               .then((value) {
+              //             schedules = value;
+              //             setState(() {});
+              //             schedules.forEach((element) {
+              //               if (element.data != null &&
+              //                   element.data.imageAfters != null)
+              //                 element.data.imageAfters.forEach((e) async {
+              //                   e.base64 =
+              //                       await networkImageToBase64(e.src);
+              //                 });
+              //               if (element.data != null &&
+              //                   element.data.imageBefores != null)
+              //                 element.data.imageBefores.forEach((e) async {
+              //                   e.base64 =
+              //                       await networkImageToBase64(e.src);
+              //                   // print(e.src);
+              //                   // print(e.path);
+              //                   // print(e.base64);
+              //                 });
+              //               setState(() {});
+              //             });
+              //           });
+              //           setState(() {
+              //             isLoading = false;
+              //           });
+              //         },
+              //       );
+              //     }).toList(),
+              //     onChanged: (value) {
+              //       setState(() {
+              //         _project = value.text;
+              //         _idSchedule = value.id.toString();
+              //         projectIndex = dataProject
+              //             .indexWhere((e) => e.text == value.text);
+              //       });
+              //     },
+              //   ),
               SizedBox(height: 24),
               if (schedules != null && isLoading)
                 Center(
@@ -599,6 +558,113 @@ class _QualityControlPageState extends State<QualityControlPage> {
             //() => submitHandler(),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SubjekJadwalSelection extends StatefulWidget {
+  final QualityControlPage widget;
+
+  _SubjekJadwalSelection({Key key, this.widget}) : super(key: key);
+
+  @override
+  __SubjekJadwalSelectionState createState() => __SubjekJadwalSelectionState();
+}
+
+class __SubjekJadwalSelectionState extends State<_SubjekJadwalSelection> {
+  ScrollController _scrollController = ScrollController();
+
+  List<dynamic> projectList = [];
+  List<ProjectModel> dataProject = [];
+
+  bool isLoading = false;
+  bool more = true;
+  int page = 2;
+
+  _loadMore() async {
+    isLoading = true;
+    if (mounted) setState(() {});
+
+    final data = await ProjectService.getProjectsData(
+        role: (widget.widget.role == null)
+            ? widget.widget.link
+            : widget.widget.role,
+        page: page);
+
+    if (data != null && data.projects != null && data.projects.isNotEmpty) {
+      isLoading = false;
+      dataProject.addAll(data.projects);
+      page++;
+      if (mounted) setState(() {});
+    } else {
+      isLoading = false;
+      more = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  _loadData() async {
+    isLoading = true;
+    if (mounted) setState(() {});
+    final data = await ProjectService.getProjectsData(
+        role: (widget.widget.role == null)
+            ? widget.widget.link
+            : widget.widget.role);
+
+    if (data != null && data.projects != null && data.projects.isNotEmpty) {
+      dataProject.addAll(data.projects);
+      isLoading = false;
+      if (mounted) setState(() {});
+      return;
+    }
+    isLoading = false;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    this._loadData();
+    _scrollController.addListener(() {
+      if (_scrollController.position.extentBefore > 150) {
+        if (more && !isLoading) _loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    projectList.length;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+        controller: _scrollController,
+        itemCount: dataProject.length + 1,
+        itemBuilder: (context, index) {
+          if (index == dataProject.length) {
+            return isLoading
+                ? Center(
+                    child: SpinKitCircle(
+                      size: 50,
+                      color: Colors.red[900],
+                    ),
+                  )
+                : Container();
+          } else {
+            return ListTile(
+              title: Text('${dataProject[index].text}'),
+              onTap: () {
+                Navigator.pop(context, dataProject[index]);
+              },
+            );
+          }
+        },
       ),
     );
   }

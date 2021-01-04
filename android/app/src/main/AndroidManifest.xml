@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="id.bintoro.report_app">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
    <application
         android:label="report_app"
         android:icon="@mipmap/ic_launcher">

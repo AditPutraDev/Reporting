@@ -6,11 +6,11 @@ import 'package:report_app/models/schedule_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProjectService {
-  static Future<Projects> getProjectsData({String role}) async {
+  static Future<Projects> getProjectsData({String role, int page = 1}) async {
     final pref = await SharedPreferences.getInstance();
     final key = 'access_token';
     final value = pref.get(key) ?? 0;
-    String url = role + "/select_schedule";
+    String url = role + "/select_schedule?page=$page";
     var client = http.Client();
     var response = await client.get(url, headers: {
       'Accept': 'application/json',
@@ -18,6 +18,7 @@ class ProjectService {
     });
     if (response.statusCode == 200 && response.body != null) {
       var data = json.decode(response.body);
+      print(data);
       return Projects.fromJosn(data);
     }
     return null;
