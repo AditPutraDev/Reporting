@@ -24,6 +24,25 @@ class ProjectService {
     return null;
   }
 
+  static Future<Projects> getProjectsDataByKeyword(
+      {String role, String keyword}) async {
+    final pref = await SharedPreferences.getInstance();
+    final key = 'access_token';
+    final value = pref.get(key) ?? 0;
+    String url = role + "/select_schedule?search=$keyword";
+    var client = http.Client();
+    var response = await client.get(url, headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $value'
+    });
+    if (response.statusCode == 200 && response.body != null) {
+      var data = json.decode(response.body);
+      print(data);
+      return Projects.fromJosn(data);
+    }
+    return null;
+  }
+
   static Future<Report> getListProject({String role}) async {
     final pref = await SharedPreferences.getInstance();
     final key = 'access_token';

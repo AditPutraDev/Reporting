@@ -654,6 +654,27 @@ class __SubjekJadwalSelectionState extends State<_SubjekJadwalSelection> {
     if (mounted) setState(() {});
   }
 
+  _searchHandler(String keyword) async {
+    isLoading = true;
+    if (mounted) setState(() {});
+    final data = await ProjectService.getProjectsDataByKeyword(
+        role: (widget.widget.role == null)
+            ? widget.widget.link
+            : widget.widget.role,
+        keyword: keyword);
+
+    dataProject.clear();
+
+    if (data != null && data.projects != null && data.projects.isNotEmpty) {
+      dataProject = data.projects;
+      isLoading = false;
+      if (mounted) setState(() {});
+      return;
+    }
+    isLoading = false;
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -675,28 +696,50 @@ class __SubjekJadwalSelectionState extends State<_SubjekJadwalSelection> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView.builder(
-        controller: _scrollController,
-        itemCount: dataProject.length + 1,
-        itemBuilder: (context, index) {
-          if (index == dataProject.length) {
-            return isLoading
-                ? Center(
-                    child: SpinKitCircle(
-                      size: 50,
-                      color: Colors.red[900],
-                    ),
-                  )
-                : Container();
-          } else {
-            return ListTile(
-              title: Text('${dataProject[index].text}'),
-              onTap: () {
-                Navigator.pop(context, dataProject[index]);
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(15),
+            child: TextFormField(
+              decoration: InputDecoration(
+                hintText: 'Cari subjek Jadwal...',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (val) {
+                if (val.isEmpty) {
+                  _loadData();
+                } else {
+                  _searchHandler(val);
+                }
               },
-            );
-          }
-        },
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: dataProject.length + 1,
+              itemBuilder: (context, index) {
+                if (index == dataProject.length) {
+                  return isLoading
+                      ? Center(
+                          child: SpinKitCircle(
+                            size: 50,
+                            color: Colors.red[900],
+                          ),
+                        )
+                      : Container();
+                } else {
+                  return ListTile(
+                    title: Text('${dataProject[index].text}'),
+                    onTap: () {
+                      Navigator.pop(context, dataProject[index]);
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
